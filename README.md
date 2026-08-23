@@ -4,16 +4,14 @@
 
 Caderninho digital para macOS. Cada **nook** é um ambiente separado com suas
 próprias páginas, e cada página é uma folha livre onde você posiciona texto,
-listas e figurinhas onde quiser — não é um documento que empurra tudo pra
-baixo, é uma superfície.
+listas e figurinhas onde quiser
 
 ## O que dá pra fazer
 
 **Escrever.** Caixas de texto com formatação de verdade: negrito, itálico,
 sublinhado, sete fontes, sete tamanhos, dez cores e cinco marca-textos pastéis.
 
-**Escolher a folha.** Lisa, pautada ou quadriculada, por página. Em folha
-pautada o texto encaixa nas linhas; os widgets ficam livres.
+**Escolher a folha.** Lisa, pautada ou quadriculada, por página.
 
 **Soltar templates.** Clique pra colocar em cascata ou arraste pra escolher o
 lugar exato:
@@ -39,8 +37,3 @@ Precisa de macOS 14+ e Xcode 16+.
 swift test                # 9 testes
 ```
 
-`Scripts/bundle.sh` monta o `.app` — SwiftPM sozinho só produz um binário solto,
-sem `Info.plist` nem ícone.
-
-Pra mexer no ícone: edita `variantA` em `Scripts/make_icon.swift` (é desenho em
-CoreGraphics, não imagem) e roda `./Scripts/make_icon.sh`.
