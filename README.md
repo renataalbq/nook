@@ -1,4 +1,4 @@
-<img src="docs/icon.png" width="96" align="right" alt="">
+<img width="1595" height="793" alt="Captura de tela 2026-09-02 134346" src="https://github.com/user-attachments/assets/1df79682-47b3-4f46-9d38-3e34ebda92c1" />
 
 # Nook
 
