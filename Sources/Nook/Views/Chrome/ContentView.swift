@@ -7,6 +7,8 @@ struct ContentView: View {
     @State private var selection = CanvasSelection()
     @State private var keys = KeyCommands()
     @State private var isFocusMode = false
+    @State private var isEditingTitle = false
+    @State private var titleDraft = ""
 
     var body: some View {
         HStack(spacing: 0) {
@@ -51,6 +53,7 @@ struct ContentView: View {
         .preferredColorScheme(colorScheme)
         .onAppear { keys.start(selection: selection, store: store) }
         .onDisappear { keys.stop() }
+        .onChange(of: store.selectedPage?.id) { _, _ in isEditingTitle = false }
     }
 
     // MARK: - Page header
@@ -61,9 +64,7 @@ struct ContentView: View {
     private var pageHeader: some View {
         HStack(alignment: .top, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(pageTitle)
-                    .font(Theme.title(21))
-                    .foregroundStyle(Theme.ink)
+                titleView
                 Text(pageMeta)
                     .font(Theme.hand(12))
                     .foregroundStyle(Theme.inkSoft)
@@ -73,6 +74,32 @@ struct ContentView: View {
 
             paperModeButtons
             focusButton
+        }
+    }
+
+    /// Double-click to rename — the same gesture the sidebar's page rows
+    /// already use, just reachable from the sheet itself too.
+    @ViewBuilder
+    private var titleView: some View {
+        if isEditingTitle {
+            TextField("", text: $titleDraft)
+                .textFieldStyle(.plain)
+                .font(Theme.title(21))
+                .foregroundStyle(Theme.ink)
+                .onSubmit {
+                    if let id = store.selectedPage?.id {
+                        store.renamePage(id, to: titleDraft)
+                    }
+                    isEditingTitle = false
+                }
+        } else {
+            Text(pageTitle)
+                .font(Theme.title(21))
+                .foregroundStyle(Theme.ink)
+                .onTapGesture(count: 2) {
+                    titleDraft = store.selectedPage?.name ?? ""
+                    isEditingTitle = true
+                }
         }
     }
 
