@@ -113,6 +113,27 @@ enum TintName: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// How many pomodoro focus cycles finished today. Tracked separately from
+/// the countdown itself — the running timer is session-only, but "how many
+/// today" should survive quitting the app.
+struct PomodoroDailyCount: Codable, Hashable {
+    var date: String = ""
+    var count: Int = 0
+
+    /// Reads as 0 once the stored day rolls over — the sidebar only ever
+    /// asks "how many today", never "how many total".
+    var todayCount: Int {
+        date == Self.todayKey() ? count : 0
+    }
+
+    static func todayKey() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+}
+
 /// Root persisted document.
 struct Library: Codable {
     var nooks: [Nook]
@@ -121,6 +142,7 @@ struct Library: Codable {
     var appearance: AppearanceMode = .system
     /// Whether the nooks/pages panel is showing as the 64px dot rail.
     var sidebarCollapsed: Bool = false
+    var pomodoroCycles: PomodoroDailyCount = PomodoroDailyCount()
 
     static var starter: Library {
         var welcome = Page()

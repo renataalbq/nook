@@ -277,6 +277,18 @@ final class LibraryStore {
         scheduleSave()
     }
 
+    /// Bumps today's pomodoro count, starting a fresh count if the stored
+    /// one is from an earlier day.
+    func recordPomodoroCycle() {
+        let today = PomodoroDailyCount.todayKey()
+        if library.pomodoroCycles.date == today {
+            library.pomodoroCycles.count += 1
+        } else {
+            library.pomodoroCycles = PomodoroDailyCount(date: today, count: 1)
+        }
+        scheduleSave()
+    }
+
     /// Brings the item to the front so a freshly touched box is never buried.
     func raiseItem(_ id: UUID) {
         mutatePage { page in
