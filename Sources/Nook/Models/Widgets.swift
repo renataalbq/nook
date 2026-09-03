@@ -18,6 +18,9 @@ struct PostIt: Codable, Hashable {
     /// field skips straight to the body.
     var title: String = ""
     var body: String = ""
+    /// A light tilt, like a real note stuck on slightly crooked. Set via the
+    /// same drag handle stickers and washi tape use.
+    var rotation: Double = 0
 }
 
 /// Which face is picked for a given day, worst to best.

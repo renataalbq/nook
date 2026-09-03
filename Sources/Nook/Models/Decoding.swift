@@ -74,11 +74,16 @@ extension ImageBox {
 }
 
 extension PostIt {
-    private enum Keys: String, CodingKey { case tint, title, body }
+    private enum Keys: String, CodingKey { case tint, title, body, rotation }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
-        self.init(tint: c.value(.tint, .butter), title: c.value(.title, ""), body: c.value(.body, ""))
+        self.init(
+            tint: c.value(.tint, .butter),
+            title: c.value(.title, ""),
+            body: c.value(.body, ""),
+            rotation: c.value(.rotation, 0)
+        )
     }
 }
 
