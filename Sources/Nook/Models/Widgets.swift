@@ -9,6 +9,54 @@ struct WaterTrack: Codable, Hashable {
     var totalLiters: Double { Double(filled) * litersPerDrop }
 }
 
+/// A sticky note: one tint, an optional bold title line, freeform body text.
+/// Reuses `TintName` rather than a raw hex so it gets the same light/dark
+/// deepening every other pastel surface already has, for free.
+struct PostIt: Codable, Hashable {
+    var tint: TintName = .butter
+    /// Empty when the note has no title — pressing return on an empty title
+    /// field skips straight to the body.
+    var title: String = ""
+    var body: String = ""
+}
+
+/// Which face is picked for a given day, worst to best.
+enum MoodFace: String, Codable, Hashable, CaseIterable, Identifiable {
+    case awful, low, okay, good, great
+    var id: String { rawValue }
+
+    /// Lucide icon name — see `Design/Lucide/LucideIcon.swift`.
+    var symbol: String {
+        switch self {
+        case .awful: return "face-angry"
+        case .low: return "face-slightly-frowning"
+        case .okay: return "face-neutral"
+        case .good: return "face-slightly-smiling"
+        case .great: return "face-grinning"
+        }
+    }
+}
+
+/// "Como você tá hoje?" — one face per day, keyed by date so checking back
+/// tomorrow (or the day after) never loses what you picked. The widget
+/// itself only ever shows today.
+struct MoodTracker: Codable, Hashable {
+    var entries: [String: MoodFace] = [:]
+
+    /// `nil` clears the day back to unpicked.
+    var today: MoodFace? {
+        get { entries[Self.key(Date())] }
+        set { entries[Self.key(Date())] = newValue }
+    }
+
+    private static func key(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+}
+
 struct TodoItem: Codable, Hashable, Identifiable {
     var id: UUID = UUID()
     var text: String = ""
@@ -24,11 +72,12 @@ struct TodoList: Codable, Hashable {
 enum DayMark: String, Codable, Hashable, CaseIterable {
     case cross, circle, heart
 
+    /// Lucide icon name — see `Design/Lucide/LucideIcon.swift`.
     var symbol: String {
         switch self {
-        case .cross: return "xmark"
+        case .cross: return "x"
         case .circle: return "circle"
-        case .heart: return "heart.fill"
+        case .heart: return "heart"
         }
     }
 

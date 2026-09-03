@@ -73,6 +73,42 @@ extension ImageBox {
     }
 }
 
+extension PostIt {
+    private enum Keys: String, CodingKey { case tint, title, body }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(tint: c.value(.tint, .butter), title: c.value(.title, ""), body: c.value(.body, ""))
+    }
+}
+
+extension MoodTracker {
+    private enum Keys: String, CodingKey { case entries }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(entries: c.value(.entries, [:]))
+    }
+}
+
+extension Decor {
+    private enum Keys: String, CodingKey { case kind, tint, rotation }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(kind: c.value(.kind, .star), tint: c.value(.tint, .blush), rotation: c.value(.rotation, 0))
+    }
+}
+
+extension PomodoroDailyCount {
+    private enum Keys: String, CodingKey { case date, count }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(date: c.value(.date, ""), count: c.value(.count, 0))
+    }
+}
+
 extension Stroke {
     private enum Keys: String, CodingKey { case id, points, colorHex, width }
 
@@ -113,12 +149,13 @@ extension CanvasItem {
 }
 
 extension Page {
-    private enum Keys: String, CodingKey { case id, paper, items, strokes }
+    private enum Keys: String, CodingKey { case id, name, paper, items, strokes }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
         self.init(
             id: c.value(.id, UUID()),
+            name: c.value(.name, ""),
             paper: c.value(.paper, .grid),
             items: c.value(.items, []),
             strokes: c.value(.strokes, [])
@@ -141,7 +178,9 @@ extension Nook {
 }
 
 extension Library {
-    private enum Keys: String, CodingKey { case nooks, selectedNookID, selectedPageIDs, appearance }
+    private enum Keys: String, CodingKey {
+        case nooks, selectedNookID, selectedPageIDs, appearance, sidebarCollapsed, pomodoroCycles
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
@@ -149,7 +188,9 @@ extension Library {
             nooks: c.value(.nooks, []),
             selectedNookID: c.value(.selectedNookID, nil),
             selectedPageIDs: c.value(.selectedPageIDs, [:]),
-            appearance: c.value(.appearance, .system)
+            appearance: c.value(.appearance, .system),
+            sidebarCollapsed: c.value(.sidebarCollapsed, false),
+            pomodoroCycles: c.value(.pomodoroCycles, PomodoroDailyCount())
         )
     }
 }

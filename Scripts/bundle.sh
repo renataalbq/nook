@@ -9,10 +9,11 @@ BIN="$(swift build -c "$CONFIG" --show-bin-path)/Nook"
 
 APP="build/Nook.app"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/Fonts"
 cp "$BIN" "$APP/Contents/MacOS/Nook"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+cp Resources/Fonts/*.ttf "$APP/Contents/Resources/Fonts/"
 codesign --force --deep --sign - "$APP" 2>/dev/null || true
 
 echo "built $APP"

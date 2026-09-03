@@ -60,8 +60,7 @@ struct GifPicker: View {
 
     private var searchField: some View {
         HStack(spacing: 6) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 11))
+            LucideIcon(name: "search", size: 13)
                 .foregroundStyle(Theme.inkSoft)
 
             TextField("buscar…", text: $query)
@@ -84,7 +83,7 @@ struct GifPicker: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .background(
-            Capsule().fill(Theme.chrome)
+            Capsule().fill(Theme.surface)
                 .overlay(Capsule().stroke(Theme.ruleLine, lineWidth: 1))
         )
     }
@@ -201,7 +200,7 @@ struct RemoteAnimatedImage: View {
                 AnimatedNSImage(image: image)
             } else {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Theme.chrome)
+                    .fill(Theme.surface)
             }
         }
         .task(id: url) {

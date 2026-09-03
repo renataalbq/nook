@@ -27,8 +27,7 @@ struct ImageBoxView: View {
 
     private var placeholder: some View {
         VStack(spacing: 5) {
-            Image(systemName: "photo.badge.plus")
-                .font(.system(size: 20))
+            LucideIcon(name: "image-plus", size: 22)
                 .foregroundStyle(Theme.inkSoft.opacity(0.7))
             Text("clique 2x para escolher")
                 .font(Theme.hand(11))

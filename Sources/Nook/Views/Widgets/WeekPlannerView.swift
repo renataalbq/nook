@@ -25,33 +25,32 @@ struct WeekPlannerView: View {
         }
         .padding(9)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
                 .fill(Theme.paper.opacity(0.85))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Theme.butter.opacity(0.95), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
+                        .stroke(Theme.butter.border.opacity(0.95), lineWidth: 1)
                 )
         )
     }
 
     private var header: some View {
         HStack(spacing: 4) {
-            arrow("chevron.left") { onChange(data.shifted(by: -1)) }
+            arrow("chevron-left") { onChange(data.shifted(by: -1)) }
 
             Text(data.title)
-                .font(Theme.hand(12, weight: .semibold))
+                .font(Theme.title(16))
                 .foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity)
 
-            arrow("chevron.right") { onChange(data.shifted(by: 1)) }
+            arrow("chevron-right") { onChange(data.shifted(by: 1)) }
         }
         .padding(.bottom, 5)
     }
 
     private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 9, weight: .semibold))
+            LucideIcon(name: symbol, size: 11)
                 .foregroundStyle(Theme.inkSoft)
                 .frame(width: 16, height: 16)
         }
@@ -96,7 +95,7 @@ private struct DayRow: View {
                 VStack(spacing: -1) {
                     Text(dayNumber)
                         .font(Theme.hand(17, weight: .semibold))
-                        .foregroundStyle(isToday ? Theme.water : Theme.ink)
+                        .foregroundStyle(isToday ? Theme.water.accent : Theme.ink)
                     Text(weekday)
                         .font(Theme.hand(9))
                         .foregroundStyle(Theme.inkSoft)
@@ -148,8 +147,7 @@ private struct DayRow: View {
         Button {
             onToggleTodo(key, !hasTodo)
         } label: {
-            Image(systemName: hasTodo ? "checklist.checked" : "checklist")
-                .font(.system(size: 10))
+            LucideIcon(name: hasTodo ? "list-checks" : "list", size: 12)
                 .foregroundStyle(Theme.inkSoft.opacity(hasTodo ? 0.8 : 0.55))
                 .frame(width: 18, height: 18)
         }
