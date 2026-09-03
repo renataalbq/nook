@@ -6,7 +6,6 @@ struct TodoListView: View {
     let onChange: (TodoList) -> Void
 
     @State private var titleDraft = ""
-    @State private var isHovering = false
     @FocusState private var focusedItemID: UUID?
 
     private var doneCount: Int { data.items.filter(\.done).count }
@@ -46,25 +45,28 @@ struct TodoListView: View {
                 } onSubmit: {
                     insertItem(after: item.id)
                 } onDeleteEmpty: {
-                    guard item.text.isEmpty, data.items.count > 1 else { return }
+                    // TodoRow already checked its own live `draft` before
+                    // calling this — re-checking `item.text` here used stale
+                    // data: `item` is this render pass's snapshot, and it
+                    // hadn't caught up with the character that was just
+                    // deleted yet, so the guard silently failed.
+                    guard data.items.count > 1 else { return }
                     deleteItem(item.id, focusPrevious: index > 0 ? data.items[index - 1].id : nil)
                 }
             }
 
-            if isHovering {
-                Button {
-                    appendItem()
-                } label: {
-                    HStack(spacing: 4) {
-                        LucideIcon(name: "plus", size: 11)
-                        Text("item")
-                    }
-                    .font(Theme.hand(11))
-                    .foregroundStyle(Theme.inkSoft)
+            Button {
+                appendItem()
+            } label: {
+                HStack(spacing: 4) {
+                    LucideIcon(name: "plus", size: 11)
+                    Text("item")
                 }
-                .buttonStyle(.plain)
-                .padding(.leading, 4)
+                .font(Theme.hand(11))
+                .foregroundStyle(Theme.inkSoft)
             }
+            .buttonStyle(.plain)
+            .padding(.leading, 4)
 
             Spacer(minLength: 0)
         }
@@ -77,7 +79,6 @@ struct TodoListView: View {
                         .stroke(Theme.blush.border.opacity(0.9), lineWidth: 1)
                 )
         )
-        .onHover { isHovering = $0 }
     }
 
     /// Enter used to mean "click the tiny + item button instead" — now it
@@ -120,7 +121,6 @@ private struct TodoRow: View {
     let onDeleteEmpty: () -> Void
 
     @State private var draft = ""
-    @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 8) {
@@ -146,16 +146,17 @@ private struct TodoRow: View {
                 }
                 .onChange(of: item.text) { _, new in if new != draft { draft = new } }
 
-            if isHovering {
-                Button(action: onDelete) {
-                    LucideIcon(name: "circle-minus", size: 12)
-                        .foregroundStyle(Theme.inkSoft.opacity(0.6))
-                }
-                .buttonStyle(.plain)
+            // Always on screen now, not hover-gated — a button that only
+            // shows up if you happen to be hovering exactly the right spot
+            // is a button people can't find.
+            Button(action: onDelete) {
+                LucideIcon(name: "circle-minus", size: 12)
+                    .foregroundStyle(Theme.inkSoft.opacity(0.5))
             }
+            .buttonStyle(.plain)
+            .help("apagar item")
         }
         .padding(.horizontal, 3)
-        .onHover { isHovering = $0 }
     }
 
     /// Filled rounded square with a white check when done, an outlined one
