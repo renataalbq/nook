@@ -35,6 +35,7 @@ enum ItemKind: Codable, Hashable {
     case calendar(CalendarBoard)
     case image(ImageBox)
     case week(WeekPlanner)
+    case postIt(PostIt)
 
     var defaultSize: CGSize {
         switch self {
@@ -44,6 +45,7 @@ enum ItemKind: Codable, Hashable {
         case .calendar: return CGSize(width: 268, height: 236)
         case .image(let box): return CGSize(width: 260, height: 260 / max(0.2, box.aspect))
         case .week: return CGSize(width: 340, height: 400)
+        case .postIt: return CGSize(width: 170, height: 150)
         }
     }
 

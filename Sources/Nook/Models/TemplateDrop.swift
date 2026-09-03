@@ -14,6 +14,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
     case week
     case todoList
     case waterTrack
+    case postIt
 
     var id: String { rawValue }
 
@@ -23,6 +24,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
         case .week: return "semana"
         case .todoList: return "listinha"
         case .waterTrack: return "água"
+        case .postIt: return "post-it"
         }
     }
 
@@ -33,6 +35,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
         case .week: return "calendar"
         case .todoList: return "list-checks"
         case .waterTrack: return "droplet"
+        case .postIt: return "sticky-note"
         }
     }
 
@@ -42,6 +45,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
         case .week: return .week(.current())
         case .todoList: return .todoList(TodoList())
         case .waterTrack: return .waterTrack(WaterTrack())
+        case .postIt: return .postIt(PostIt())
         }
     }
 }
