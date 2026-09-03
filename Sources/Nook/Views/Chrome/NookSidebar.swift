@@ -10,6 +10,7 @@ struct NookSidebar: View {
     @State private var nookDraft = ""
     @State private var renamingPageID: UUID?
     @State private var pageDraft = ""
+    @State private var pomodoro = PomodoroTimer()
 
     private var isCollapsed: Bool { store.library.sidebarCollapsed }
 
@@ -313,10 +314,69 @@ struct NookSidebar: View {
     @ViewBuilder
     private var footer: some View {
         if isCollapsed {
-            appearanceButtonCompact
+            VStack(spacing: 10) {
+                pomodoroButtonCompact
+                appearanceButtonCompact
+            }
         } else {
-            appearanceToggle
+            VStack(spacing: 8) {
+                pomodoroCard
+                appearanceToggle
+            }
         }
+    }
+
+    private var pomodoroCard: some View {
+        HStack(spacing: 9) {
+            ZStack {
+                Circle().stroke(Theme.accent.opacity(0.22), lineWidth: 3)
+                Circle()
+                    .trim(from: 0, to: max(0.001, pomodoro.progress))
+                    .stroke(Theme.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Text(pomodoro.label)
+                    .font(Theme.hand(9, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .monospacedDigit()
+            }
+            .frame(width: 40, height: 40)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text("pomodoro")
+                    .font(Theme.hand(12, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                Text("foco · 25 min")
+                    .font(Theme.hand(10))
+                    .foregroundStyle(Theme.inkSoft)
+            }
+
+            Spacer(minLength: 4)
+
+            Button {
+                pomodoro.toggle()
+            } label: {
+                LucideIcon(name: pomodoro.isRunning ? "pause" : "play", size: 12)
+                    .foregroundStyle(Color.white)
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(Theme.accent))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous).fill(Theme.surface))
+    }
+
+    private var pomodoroButtonCompact: some View {
+        Button {
+            pomodoro.toggle()
+        } label: {
+            LucideIcon(name: pomodoro.isRunning ? "pause" : "timer", size: 14)
+                .foregroundStyle(pomodoro.isRunning ? Color.white : Theme.inkSoft)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(pomodoro.isRunning ? Theme.accent : Theme.surface.opacity(0.6)))
+        }
+        .buttonStyle(.plain)
+        .help("pomodoro — \(pomodoro.label)")
     }
 
     private var appearanceToggle: some View {
