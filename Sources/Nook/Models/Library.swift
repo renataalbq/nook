@@ -37,6 +37,7 @@ enum ItemKind: Codable, Hashable {
     case week(WeekPlanner)
     case postIt(PostIt)
     case mood(MoodTracker)
+    case decor(Decor)
 
     var defaultSize: CGSize {
         switch self {
@@ -48,6 +49,7 @@ enum ItemKind: Codable, Hashable {
         case .week: return CGSize(width: 340, height: 400)
         case .postIt: return CGSize(width: 170, height: 150)
         case .mood: return CGSize(width: 260, height: 110)
+        case .decor(let data): return data.kind.isWashi ? CGSize(width: 130, height: 34) : CGSize(width: 70, height: 70)
         }
     }
 
@@ -111,6 +113,45 @@ struct Nook: Codable, Hashable, Identifiable {
 enum TintName: String, Codable, CaseIterable, Identifiable {
     case blush, sky, sage, butter, lilac
     var id: String { rawValue }
+}
+
+/// A decorative shape or washi-tape strip. Pure decoration — nothing to
+/// edit besides its look — but it does rotate, unlike every other widget.
+enum DecorKind: String, Codable, CaseIterable, Identifiable {
+    case star, heart, sparkle, sun, cloud, washi
+    var id: String { rawValue }
+
+    var isWashi: Bool { self == .washi }
+
+    /// Lucide icon name for the sticker shapes; washi tape draws its own
+    /// stripes instead of an icon.
+    var symbol: String {
+        switch self {
+        case .star: return "star"
+        case .heart: return "heart"
+        case .sparkle: return "sparkles"
+        case .sun: return "sun"
+        case .cloud: return "cloud"
+        case .washi: return ""
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .star: return "estrela"
+        case .heart: return "coração"
+        case .sparkle: return "brilho"
+        case .sun: return "sol"
+        case .cloud: return "nuvem"
+        case .washi: return "washi tape"
+        }
+    }
+}
+
+struct Decor: Codable, Hashable {
+    var kind: DecorKind = .star
+    var tint: TintName = .blush
+    var rotation: Double = 0
 }
 
 /// How many pomodoro focus cycles finished today. Tracked separately from

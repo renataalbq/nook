@@ -63,9 +63,9 @@ struct PageCanvas: View {
                 .stroke(borderColor, lineWidth: isTargeted || pen.isActive ? 2 : 1)
         )
         .shadow(color: Theme.cardShadow, radius: 14, y: 6)
-        // One drop handler for everything: template chips, files, and images
-        // dragged straight out of a browser.
-        .onDrop(of: [.nookTemplate] + ImageImport.acceptedTypes, isTargeted: $isTargeted) { providers, location in
+        // One drop handler for everything: template chips, decor chips,
+        // files, and images dragged straight out of a browser.
+        .onDrop(of: [.nookTemplate, .nookDecor] + ImageImport.acceptedTypes, isTargeted: $isTargeted) { providers, location in
             handleDrop(providers, at: location)
         }
     }
@@ -103,6 +103,18 @@ struct PageCanvas: View {
                 guard let data, let drop = try? JSONDecoder().decode(TemplateDrop.self, from: data) else { return }
                 Task { @MainActor in
                     place(drop.kind.makeKind(), at: location)
+                }
+            }
+            return true
+        }
+
+        if let provider = providers.first(where: {
+            $0.hasItemConformingToTypeIdentifier(UTType.nookDecor.identifier)
+        }) {
+            provider.loadDataRepresentation(forTypeIdentifier: UTType.nookDecor.identifier) { data, _ in
+                guard let data, let drop = try? JSONDecoder().decode(DecorDrop.self, from: data) else { return }
+                Task { @MainActor in
+                    place(.decor(Decor(kind: drop.kind)), at: location)
                 }
             }
             return true

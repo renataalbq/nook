@@ -91,6 +91,15 @@ extension MoodTracker {
     }
 }
 
+extension Decor {
+    private enum Keys: String, CodingKey { case kind, tint, rotation }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(kind: c.value(.kind, .star), tint: c.value(.tint, .blush), rotation: c.value(.rotation, 0))
+    }
+}
+
 extension PomodoroDailyCount {
     private enum Keys: String, CodingKey { case date, count }
 
