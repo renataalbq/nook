@@ -82,6 +82,15 @@ extension PostIt {
     }
 }
 
+extension MoodTracker {
+    private enum Keys: String, CodingKey { case entries }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(entries: c.value(.entries, [:]))
+    }
+}
+
 extension Stroke {
     private enum Keys: String, CodingKey { case id, points, colorHex, width }
 
