@@ -10,9 +10,9 @@ struct WaterTrackView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text("Water Track")
-                    .font(Theme.hand(13, weight: .medium))
-                    .foregroundStyle(Theme.inkSoft)
+                Text("água")
+                    .font(Theme.title(15))
+                    .foregroundStyle(Theme.ink)
 
                 if isHovering {
                     stepper
@@ -22,30 +22,23 @@ struct WaterTrackView: View {
 
                 Text(String(format: "%.1fL", data.totalLiters))
                     .font(Theme.hand(13, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
+                    .foregroundStyle(Theme.water.accent)
             }
 
             HStack(spacing: 7) {
                 ForEach(0..<data.goal, id: \.self) { index in
-                    Image(systemName: index < data.filled ? "drop.fill" : "drop")
-                        .font(.system(size: 19))
-                        .foregroundStyle(index < data.filled ? Theme.water : Theme.water.opacity(0.4))
-                        .onTapGesture {
-                            var copy = data
-                            copy.filled = (data.filled == index + 1) ? index : index + 1
-                            onChange(copy)
-                        }
+                    dropBadge(index)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(10)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
                 .fill(Theme.paper.opacity(0.85))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Theme.sky.opacity(0.8), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
+                        .stroke(Theme.water.border.opacity(0.8), lineWidth: 1)
                 )
         )
         .onHover { isHovering = $0 }
@@ -66,6 +59,26 @@ struct WaterTrackView: View {
         }
     }
 
+    /// A filled circle badge rather than a bare drop glyph — pale and
+    /// outlined when empty, solid with a white drop once tapped.
+    private func dropBadge(_ index: Int) -> some View {
+        let isFilled = index < data.filled
+
+        return Circle()
+            .fill(isFilled ? Theme.water.accent : Theme.water.pale)
+            .overlay(
+                LucideIcon(name: "droplet", size: 13)
+                    .foregroundStyle(isFilled ? Color.white : Theme.water.accent.opacity(0.55))
+            )
+            .frame(width: 26, height: 26)
+            .contentShape(Circle())
+            .onTapGesture {
+                var copy = data
+                copy.filled = (data.filled == index + 1) ? index : index + 1
+                onChange(copy)
+            }
+    }
+
     private var stepper: some View {
         HStack(spacing: 2) {
             stepButton("minus", enabled: data.goal > 1) {
@@ -84,11 +97,10 @@ struct WaterTrackView: View {
 
     private func stepButton(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 8, weight: .bold))
+            LucideIcon(name: symbol, size: 9, weight: 3)
                 .foregroundStyle(Theme.inkSoft)
                 .frame(width: 14, height: 14)
-                .background(Circle().fill(Theme.sky.opacity(0.5)))
+                .background(Circle().fill(Theme.water.pale))
         }
         .buttonStyle(.plain)
         .disabled(!enabled)

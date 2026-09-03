@@ -15,11 +15,12 @@ enum PaperStyle: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Lucide icon name — see `Design/Lucide/LucideIcon.swift`.
     var symbol: String {
         switch self {
-        case .plain: return "rectangle"
-        case .ruled: return "list.dash"
-        case .grid: return "square.grid.3x3"
+        case .plain: return "square"
+        case .ruled: return "list"
+        case .grid: return "grid-3x3"
         }
     }
 }
@@ -34,6 +35,7 @@ enum ItemKind: Codable, Hashable {
     case calendar(CalendarBoard)
     case image(ImageBox)
     case week(WeekPlanner)
+    case postIt(PostIt)
 
     var defaultSize: CGSize {
         switch self {
@@ -43,6 +45,7 @@ enum ItemKind: Codable, Hashable {
         case .calendar: return CGSize(width: 268, height: 236)
         case .image(let box): return CGSize(width: 260, height: 260 / max(0.2, box.aspect))
         case .week: return CGSize(width: 340, height: 400)
+        case .postIt: return CGSize(width: 170, height: 150)
         }
     }
 
@@ -86,6 +89,8 @@ struct CanvasItem: Codable, Hashable, Identifiable {
 /// One sheet inside a nook.
 struct Page: Codable, Hashable, Identifiable {
     var id: UUID = UUID()
+    /// Empty until the user names it; the sidebar and header show "sem título" then.
+    var name: String = ""
     var paper: PaperStyle = .grid
     var items: [CanvasItem] = []
     /// Freehand pen marks, drawn above the sheet and below nothing else.
@@ -112,6 +117,8 @@ struct Library: Codable {
     var selectedNookID: UUID?
     var selectedPageIDs: [UUID: UUID] = [:]
     var appearance: AppearanceMode = .system
+    /// Whether the nooks/pages panel is showing as the 64px dot rail.
+    var sidebarCollapsed: Bool = false
 
     static var starter: Library {
         var welcome = Page()

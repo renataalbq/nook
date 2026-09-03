@@ -7,6 +7,8 @@ import CoreGraphics
 @Observable
 final class LibraryStore {
     private(set) var library: Library
+    /// When the debounced write last actually hit disk; drives the "salvo…" label.
+    private(set) var lastSavedAt: Date?
 
     static var defaultFolder: URL {
         FileManager.default
@@ -130,6 +132,37 @@ final class LibraryStore {
         if library.selectedPageIDs[library.nooks[index].id] == id {
             library.selectedPageIDs[library.nooks[index].id] = library.nooks[index].pages.first?.id
         }
+        scheduleSave()
+    }
+
+    func renamePage(_ id: UUID, to name: String) {
+        guard let nookIndex = selectedNookIndex,
+              let pageIndex = library.nooks[nookIndex].pages.firstIndex(where: { $0.id == id })
+        else { return }
+        library.nooks[nookIndex].pages[pageIndex].name = name
+        scheduleSave()
+    }
+
+    /// Moves the page at `sourceID` to just before `destinationID` within the
+    /// same nook. Dropping past the end (`destinationID == nil`) sends it last.
+    func movePage(_ sourceID: UUID, before destinationID: UUID?) {
+        guard let nookIndex = selectedNookIndex else { return }
+        var pages = library.nooks[nookIndex].pages
+        guard let sourceIndex = pages.firstIndex(where: { $0.id == sourceID }) else { return }
+        let page = pages.remove(at: sourceIndex)
+
+        if let destinationID, let destinationIndex = pages.firstIndex(where: { $0.id == destinationID }) {
+            pages.insert(page, at: destinationIndex)
+        } else {
+            pages.append(page)
+        }
+
+        library.nooks[nookIndex].pages = pages
+        scheduleSave()
+    }
+
+    func setSidebarCollapsed(_ collapsed: Bool) {
+        library.sidebarCollapsed = collapsed
         scheduleSave()
     }
 
@@ -282,13 +315,14 @@ final class LibraryStore {
         saveTask?.cancel()
         let snapshot = library
         let url = fileURL
-        saveTask = Task { @MainActor in
+        saveTask = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
             let encoder = JSONEncoder()
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             guard let data = try? encoder.encode(snapshot) else { return }
             try? data.write(to: url, options: .atomic)
+            self?.lastSavedAt = Date()
         }
     }
 }

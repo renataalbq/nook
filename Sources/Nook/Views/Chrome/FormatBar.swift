@@ -2,6 +2,12 @@ import SwiftUI
 import AppKit
 
 /// Styling controls for whichever text box holds the caret.
+///
+/// Lives inside a floating `NSPopover` (wired up in `RichTextEditor.swift`)
+/// that only appears while a text selection is non-empty, anchored just
+/// above it. Because it always floats over the sheet rather than sitting in
+/// the surrounding chrome, its colours invert against `Theme.popover`
+/// instead of following the normal ink/chrome tokens.
 struct FormatBar: View {
     let focus: EditorFocus
 
@@ -50,9 +56,8 @@ struct FormatBar: View {
             }
 
             group {
-                Image(systemName: "highlighter")
-                    .font(.system(size: 11))
-                    .foregroundStyle(Theme.inkSoft)
+                LucideIcon(name: "highlighter", size: 12)
+                    .foregroundStyle(Theme.popoverInk.opacity(0.7))
 
                 ForEach(TextFormatting.highlights, id: \.self) { hex in
                     swatch(hex, shape: RoundedRectangle(cornerRadius: 4)) {
@@ -63,9 +68,8 @@ struct FormatBar: View {
                 Button {
                     run { TextFormatting.setHighlight(nil, in: $0) }
                 } label: {
-                    Image(systemName: "slash.circle")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.inkSoft)
+                    LucideIcon(name: "circle-slash", size: 12)
+                        .foregroundStyle(Theme.popoverInk.opacity(0.7))
                 }
                 .buttonStyle(.plain)
                 .help("tirar marca-texto")
@@ -74,24 +78,22 @@ struct FormatBar: View {
             Button {
                 run { TextFormatting.clearFormatting(in: $0) }
             } label: {
-                Image(systemName: "eraser")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.inkSoft)
+                LucideIcon(name: "eraser", size: 13)
+                    .foregroundStyle(Theme.popoverInk.opacity(0.7))
                     .frame(width: 26, height: 24)
                     .background(capsuleBackground)
             }
             .buttonStyle(.plain)
             .help("limpar formatação")
-
-            Spacer(minLength: 0)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Theme.chrome)
+            RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
+                .fill(Theme.popover)
                 .shadow(color: Theme.cardShadow, radius: 8, y: 3)
         )
+        .fixedSize()
     }
 
     // MARK: - Pieces
@@ -102,7 +104,7 @@ struct FormatBar: View {
             .padding(.vertical, 3)
             .background(
                 RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(Theme.desk.opacity(0.7))
+                    .fill(Theme.popoverInk.opacity(0.08))
             )
     }
 
@@ -123,7 +125,7 @@ struct FormatBar: View {
                 .italic(italic)
                 .underline(underline)
                 .strikethrough(strike)
-                .foregroundStyle(Theme.ink)
+                .foregroundStyle(Theme.popoverInk)
                 .frame(width: 24, height: 22)
                 .background(capsuleBackground)
         }
@@ -135,14 +137,14 @@ struct FormatBar: View {
             shape
                 .fill(Color(nsColor: NSColor(hex: hex)))
                 .frame(width: 16, height: 16)
-                .overlay(shape.stroke(Theme.inkSoft.opacity(0.25), lineWidth: 0.5))
+                .overlay(shape.stroke(Theme.popoverInk.opacity(0.25), lineWidth: 0.5))
         }
         .buttonStyle(.plain)
     }
 
     private var capsuleBackground: some View {
         RoundedRectangle(cornerRadius: 6, style: .continuous)
-            .fill(Theme.chrome)
+            .fill(Theme.popoverInk.opacity(0.1))
     }
 
     /// Every command needs a focused text view; without one there is nothing to style.

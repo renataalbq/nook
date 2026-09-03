@@ -50,16 +50,17 @@ enum AppearanceMode: String, Codable, CaseIterable, Identifiable {
 
     var label: String {
         switch self {
-        case .system: return "sistema"
+        case .system: return "auto"
         case .light: return "claro"
         case .dark: return "escuro"
         }
     }
 
+    /// Lucide icon name — see `Design/Lucide/LucideIcon.swift`.
     var symbol: String {
         switch self {
-        case .system: return "circle.lefthalf.filled"
-        case .light: return "sun.max"
+        case .system: return "sun-moon"
+        case .light: return "sun"
         case .dark: return "moon"
         }
     }

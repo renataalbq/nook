@@ -15,11 +15,18 @@ struct PageCanvas: View {
         ZStack(alignment: .topLeading) {
             PaperBackground(style: page.paper)
 
-            // Clicking bare paper only clears the selection; boxes come from
-            // the dock, so a stray double-click no longer litters the page.
+            // A single click on bare paper only clears the selection. A
+            // double-click drops a text box exactly there — the dock is a
+            // shortcut now, not the only way in. `onTapGesture` has no
+            // location, so the double-click needs the spatial variant instead.
             Color.clear
                 .contentShape(Rectangle())
                 .onTapGesture { deselect() }
+                .simultaneousGesture(
+                    SpatialTapGesture(count: 2).onEnded { value in
+                        place(.richText(RichText()), at: value.location)
+                    }
+                )
 
             ForEach(page.items) { item in
                 CanvasItemView(
@@ -38,6 +45,11 @@ struct PageCanvas: View {
             }
             .allowsHitTesting(!pen.isActive)
 
+            if page.items.isEmpty {
+                emptyHint
+                    .allowsHitTesting(false)
+            }
+
             DrawingLayer(
                 strokes: page.strokes,
                 pen: pen,
@@ -45,9 +57,9 @@ struct PageCanvas: View {
                 onErase: { store.eraseStrokes(near: $0, radius: pen.eraserRadius) }
             )
         }
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.radiusLarge, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusLarge, style: .continuous)
                 .stroke(borderColor, lineWidth: isTargeted || pen.isActive ? 2 : 1)
         )
         .shadow(color: Theme.cardShadow, radius: 14, y: 6)
@@ -56,6 +68,31 @@ struct PageCanvas: View {
         .onDrop(of: [.nookTemplate] + ImageImport.acceptedTypes, isTargeted: $isTargeted) { providers, location in
             handleDrop(providers, at: location)
         }
+    }
+
+    /// Shown only while the page is genuinely blank — the moment the first
+    /// box lands, this never comes back.
+    private var emptyHint: some View {
+        VStack(spacing: 10) {
+            LucideIcon(name: "mouse-pointer-click", size: 20)
+                .foregroundStyle(Theme.accent)
+                .frame(width: 52, height: 52)
+                .background(Circle().fill(Theme.accent.opacity(0.14)))
+
+            VStack(spacing: 4) {
+                Text("duplo clique pra escrever")
+                    .font(Theme.hand(17, weight: .bold))
+                    .foregroundStyle(Theme.ink)
+                Text("a caixa nasce exatamente onde você clicou")
+                    .font(Theme.hand(12))
+                    .foregroundStyle(Theme.inkSoft)
+            }
+
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(Theme.inkSoft.opacity(0.25), style: StrokeStyle(lineWidth: 1, dash: [5, 4]))
+                .frame(width: 220, height: 70)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func handleDrop(_ providers: [NSItemProvider], at location: CGPoint) -> Bool {
@@ -107,7 +144,7 @@ struct PageCanvas: View {
     }
 
     private var borderColor: Color {
-        if isTargeted { return Theme.water }
+        if isTargeted { return Theme.water.accent }
         if pen.isActive {
             return pen.isEraser
                 ? Theme.inkSoft.opacity(0.7)

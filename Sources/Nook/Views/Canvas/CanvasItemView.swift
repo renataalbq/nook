@@ -41,8 +41,11 @@ struct CanvasItemView: View {
     private var isTextItem: Bool { item.kind.isText }
 
     /// The outline is a selection cue, not decoration: an unselected box the
-    /// pointer is not over shows nothing at all.
+    /// pointer is not over shows nothing at all. Text boxes skip it entirely —
+    /// their own grab-strip dots and the format popover already say "this is
+    /// the one", and a dashed rectangle around live text just adds noise.
     private var outlineOpacity: Double {
+        if isTextItem { return 0 }
         if isSelected { return 0.45 }
         if isHovering { return 0.35 }
         return 0
@@ -75,6 +78,8 @@ struct CanvasItemView: View {
             WaterTrackView(data: data) { store.updateKind(item.id, to: .waterTrack($0)) }
         case .todoList(let data):
             TodoListView(data: data) { store.updateKind(item.id, to: .todoList($0)) }
+        case .postIt(let data):
+            PostItView(data: data) { store.updateKind(item.id, to: .postIt($0)) }
         case .calendar(let data):
             CalendarBoardView(data: data) { store.updateKind(item.id, to: .calendar($0)) }
         case .week(let data):
@@ -135,8 +140,7 @@ struct CanvasItemView: View {
             Button {
                 store.deleteItem(item.id)
             } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 14))
+                LucideIcon(name: "circle-x", size: 15)
                     .foregroundStyle(Theme.inkSoft.opacity(0.6))
             }
             .buttonStyle(.plain)
