@@ -1,5 +1,4 @@
 import SwiftUI
-import AppKit
 
 struct ContentView: View {
     @State private var store = LibraryStore()
@@ -7,13 +6,16 @@ struct ContentView: View {
     @State private var pen = PenSettings()
     @State private var selection = CanvasSelection()
     @State private var keys = KeyCommands()
+    @State private var isFocusMode = false
 
     var body: some View {
         HStack(spacing: 0) {
-            NookRail(store: store)
+            if !isFocusMode {
+                NookSidebar(store: store)
+            }
 
-            VStack(spacing: 10) {
-                FormatBar(focus: focus)
+            VStack(alignment: .leading, spacing: 12) {
+                pageHeader
 
                 ZStack(alignment: .bottom) {
                     if let page = store.selectedPage {
@@ -40,45 +42,96 @@ struct ContentView: View {
                         .padding(.bottom, 14)
                 }
             }
-            .padding(.top, 10)
+            .padding(.top, 34)
             .padding(.bottom, 18)
-            .padding(.trailing, 22)
+            .padding(.horizontal, 22)
+            .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isFocusMode)
         }
         .background(Theme.desk)
         .preferredColorScheme(colorScheme)
         .onAppear { keys.start(selection: selection, store: store) }
         .onDisappear { keys.stop() }
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                wordmark
+    }
+
+    // MARK: - Page header
+
+    /// Title, breadcrumb meta, paper-style picker and the focus toggle —
+    /// everything that used to live in the window's native toolbar now lives
+    /// here so the whole chrome reads as one surface instead of two.
+    private var pageHeader: some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(pageTitle)
+                    .font(Theme.title(21))
+                    .foregroundStyle(Theme.ink)
+                Text(pageMeta)
+                    .font(Theme.hand(12))
+                    .foregroundStyle(Theme.inkSoft)
             }
 
-            ToolbarItem {
-                pageNavigator
-            }
+            Spacer(minLength: 8)
 
-            ToolbarItem {
-                Picker("Folha", selection: paperBinding) {
-                    ForEach(PaperStyle.allCases) { style in
-                        Label(style.label, systemImage: style.symbol).tag(style)
-                    }
+            paperModeButtons
+            focusButton
+        }
+    }
+
+    private var paperModeButtons: some View {
+        HStack(spacing: 2) {
+            ForEach(PaperStyle.allCases) { style in
+                let isSelected = store.selectedPage?.paper == style
+                Button {
+                    store.setPaper(style)
+                } label: {
+                    LucideIcon(name: style.symbol, size: 14)
+                        .foregroundStyle(isSelected ? Color.white : Theme.inkSoft)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(isSelected ? Theme.ink : Color.clear))
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 130)
-            }
-
-            ToolbarItem {
-                Picker("Aparência", selection: appearanceBinding) {
-                    ForEach(AppearanceMode.allCases) { mode in
-                        Label(mode.label, systemImage: mode.symbol).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 110)
+                .buttonStyle(.plain)
+                .help(style.label)
             }
         }
+        .padding(3)
+        .background(Capsule().fill(Theme.surface))
+    }
+
+    private var focusButton: some View {
+        Button {
+            isFocusMode.toggle()
+        } label: {
+            HStack(spacing: 5) {
+                LucideIcon(name: isFocusMode ? "eye" : "eye-off", size: 13)
+                Text(isFocusMode ? "sair" : "foco")
+            }
+            .font(Theme.hand(12, weight: .medium))
+            .foregroundStyle(Theme.inkSoft)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(Theme.surface))
+        }
+        .buttonStyle(.plain)
+        .help("esconder a barra lateral")
+    }
+
+    private var pageTitle: String {
+        let name = store.selectedPage?.name ?? ""
+        return name.isEmpty ? "sem título" : name
+    }
+
+    private var pageMeta: String {
+        let nookName = store.selectedNook?.name ?? ""
+        var parts = ["\(nookName)", "página \(pageIndex + 1) de \(pageCount)"]
+        parts.append(savedLabel)
+        return parts.joined(separator: " · ")
+    }
+
+    private var savedLabel: String {
+        guard let date = store.lastSavedAt else { return "ainda não salvo" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.unitsStyle = .short
+        return "salvo \(formatter.localizedString(for: date, relativeTo: Date()))"
     }
 
     /// How much room the page's contents actually need, with a margin so there
@@ -99,26 +152,6 @@ struct ContentView: View {
         )
     }
 
-    /// One pastel per letter, in the icon's palette. Slightly deeper than the
-    /// sheet pastels so the word stays legible at 16pt.
-    private var wordmark: some View {
-        HStack(spacing: 0) {
-            ForEach(Array("nook".enumerated()), id: \.offset) { index, letter in
-                Text(String(letter))
-                    .font(Theme.hand(17, weight: .bold))
-                    .foregroundStyle(Self.wordmarkColors[index % Self.wordmarkColors.count])
-            }
-        }
-        .padding(14)
-    }
-
-    private static let wordmarkColors: [Color] = [
-        Color(nsColor: NSColor(hex: 0xE79BAE)),
-        Color(nsColor: NSColor(hex: 0x9DB584)),
-        Color(nsColor: NSColor(hex: 0xE3BC6B)),
-        Color(nsColor: NSColor(hex: 0xA9A2D6))
-    ]
-
     /// `nil` hands the window back to the system setting.
     private var colorScheme: ColorScheme? {
         switch store.library.appearance {
@@ -128,69 +161,10 @@ struct ContentView: View {
         }
     }
 
-    /// Pages live on now that the numbered rail is gone.
-    private var pageNavigator: some View {
-        HStack(spacing: 4) {
-            Button {
-                step(-1)
-            } label: {
-                Image(systemName: "chevron.left")
-            }
-            .disabled(pageIndex <= 0)
-
-            Text("\(pageIndex + 1)/\(pageCount)")
-                .font(Theme.hand(12, weight: .medium))
-                .foregroundStyle(Theme.inkSoft)
-                .monospacedDigit()
-                .frame(minWidth: 32)
-
-            Button {
-                step(1)
-            } label: {
-                Image(systemName: "chevron.right")
-            }
-            .disabled(pageIndex >= pageCount - 1)
-
-            Button(action: store.addPage) {
-                Image(systemName: "plus")
-            }
-            .help("nova página")
-
-            Button {
-                if let id = store.selectedPage?.id { store.deletePage(id) }
-            } label: {
-                Image(systemName: "trash")
-            }
-            .disabled(pageCount <= 1)
-            .help("apagar página")
-        }
-    }
-
     private var pageCount: Int { store.selectedNook?.pages.count ?? 0 }
 
     private var pageIndex: Int {
         guard let nook = store.selectedNook, let page = store.selectedPage else { return 0 }
         return nook.pages.firstIndex { $0.id == page.id } ?? 0
-    }
-
-    private func step(_ delta: Int) {
-        guard let nook = store.selectedNook else { return }
-        let target = pageIndex + delta
-        guard nook.pages.indices.contains(target) else { return }
-        store.selectPage(nook.pages[target].id)
-    }
-
-    private var paperBinding: Binding<PaperStyle> {
-        Binding(
-            get: { store.selectedPage?.paper ?? .grid },
-            set: { store.setPaper($0) }
-        )
-    }
-
-    private var appearanceBinding: Binding<AppearanceMode> {
-        Binding(
-            get: { store.library.appearance },
-            set: { store.setAppearance($0) }
-        )
     }
 }
