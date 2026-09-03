@@ -32,32 +32,31 @@ struct CalendarBoardView: View {
         }
         .padding(9)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
                 .fill(Theme.paper.opacity(0.85))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(Theme.lilac.opacity(0.9), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous)
+                        .stroke(Theme.lilac.border.opacity(0.9), lineWidth: 1)
                 )
         )
     }
 
     private var header: some View {
         HStack(spacing: 4) {
-            arrow("chevron.left") { onChange(data.shifted(by: -1)) }
+            arrow("chevron-left") { onChange(data.shifted(by: -1)) }
 
             Text("\(data.monthName) \(String(data.year))")
-                .font(Theme.hand(12, weight: .semibold))
+                .font(Theme.title(13))
                 .foregroundStyle(Theme.ink)
                 .frame(maxWidth: .infinity)
 
-            arrow("chevron.right") { onChange(data.shifted(by: 1)) }
+            arrow("chevron-right") { onChange(data.shifted(by: 1)) }
         }
     }
 
     private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 9, weight: .semibold))
+            LucideIcon(name: symbol, size: 11)
                 .foregroundStyle(Theme.inkSoft)
                 .frame(width: 16, height: 16)
         }
@@ -73,8 +72,7 @@ struct CalendarBoardView: View {
                 .foregroundStyle(Theme.inkSoft.opacity(mark == nil ? 0.85 : 0.35))
 
             if let mark {
-                Image(systemName: mark.symbol)
-                    .font(.system(size: mark == .circle ? 14 : 12, weight: .semibold))
+                LucideIcon(name: mark.symbol, size: mark == .circle ? 15 : 13)
                     .foregroundStyle(color(for: mark))
             }
         }
@@ -91,7 +89,7 @@ struct CalendarBoardView: View {
     private func color(for mark: DayMark) -> Color {
         switch mark {
         case .cross: return Color(red: 0.85, green: 0.45, blue: 0.42)
-        case .circle: return Theme.water
+        case .circle: return Theme.water.accent
         case .heart: return Color(red: 0.90, green: 0.55, blue: 0.62)
         }
     }
