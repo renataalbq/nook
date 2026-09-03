@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// The single bar at the foot of the page: every template, stickers and the
-/// pen — all flat and always visible on one dark pill, the same floating
-/// language as the format popover. Every template can be clicked to drop
-/// straight in or dragged onto the sheet to choose the spot.
+/// The single bar at the foot of the page: text stays out with a label,
+/// everything else — templates, stickers, the pen — collapses behind its
+/// own icon until tapped, the same floating dark pill as the format
+/// popover. Every template can be clicked to drop straight in or dragged
+/// onto the sheet to choose the spot.
 struct ToolDock: View {
     let store: LibraryStore
     let pen: PenSettings
@@ -12,12 +13,13 @@ struct ToolDock: View {
     @State private var dropCount = 0
     @State private var showGifPicker = false
     @State private var showDecor = false
+    @State private var showTemplates = false
 
     var body: some View {
         HStack(spacing: 3) {
-            ForEach(TemplateKind.allCases) { kind in
-                chip(kind)
-            }
+            chip(.text)
+
+            templatesSection
 
             decorSection
 
@@ -35,9 +37,46 @@ struct ToolDock: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: pen.isActive)
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: pen.isEraser)
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showDecor)
+        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showTemplates)
     }
 
     // MARK: - Templates
+    //
+    // Text is the one thing you reach for constantly, so it stays out on its
+    // own with a label. Everything else — semana/listinha/água/post-it/mood —
+    // collapses behind a single icon until you actually want one, same as
+    // stickers and the pen. Only one section (templates/stickers/pen) stays
+    // open at a time so the dock doesn't sprawl across the whole window.
+
+    private var templatesSection: some View {
+        HStack(spacing: 4) {
+            Button {
+                showTemplates.toggle()
+                if showTemplates {
+                    showDecor = false
+                    pen.isActive = false
+                }
+            } label: {
+                LucideIcon(name: "grid-3x3", size: 14)
+                    .foregroundStyle(showTemplates ? Color.white : Theme.popoverInk.opacity(0.85))
+                    .frame(width: 30, height: 26)
+                    .background(Capsule().fill(showTemplates ? Theme.accent.opacity(0.6) : Color.clear))
+            }
+            .buttonStyle(.plain)
+            .help("templates")
+
+            if showTemplates {
+                HStack(spacing: 4) {
+                    ForEach(TemplateKind.allCases.filter { $0 != .text }) { kind in
+                        chip(kind)
+                    }
+                }
+                .padding(.horizontal, 5)
+                .padding(.vertical, 3)
+                .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Theme.popoverInk.opacity(0.08)))
+            }
+        }
+    }
 
     /// Text is the primary action — click or arraste-most, so it wears the
     /// accent pill the way the selected tool always does. Everything else
@@ -94,18 +133,15 @@ struct ToolDock: View {
         HStack(spacing: 5) {
             Button {
                 showDecor.toggle()
-            } label: {
-                HStack(spacing: 5) {
-                    LucideIcon(name: "sparkles", size: 13)
-                    Text("stickers")
-                        .font(Theme.hand(11, weight: .medium))
+                if showDecor {
+                    showTemplates = false
+                    pen.isActive = false
                 }
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-                .foregroundStyle(showDecor ? Color.white : Theme.popoverInk.opacity(0.85))
-                .padding(.horizontal, 9)
-                .padding(.vertical, 7)
-                .background(Capsule().fill(showDecor ? Theme.accent : Color.clear))
+            } label: {
+                LucideIcon(name: "sparkles", size: 14)
+                    .foregroundStyle(showDecor ? Color.white : Theme.popoverInk.opacity(0.85))
+                    .frame(width: 30, height: 26)
+                    .background(Capsule().fill(showDecor ? Theme.accent.opacity(0.6) : Color.clear))
             }
             .buttonStyle(.plain)
             .help("figurinhas e washi tape")
@@ -190,7 +226,12 @@ struct ToolDock: View {
         HStack(spacing: 8) {
             Button {
                 pen.isActive.toggle()
-                if !pen.isActive { pen.isEraser = false }
+                if pen.isActive {
+                    showTemplates = false
+                    showDecor = false
+                } else {
+                    pen.isEraser = false
+                }
             } label: {
                 LucideIcon(name: "pencil", size: 15)
                     .foregroundStyle(pen.isActive && !pen.isEraser ? Color.white : Theme.popoverInk.opacity(0.85))
