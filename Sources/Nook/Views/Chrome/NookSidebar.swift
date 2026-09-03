@@ -38,6 +38,9 @@ struct NookSidebar: View {
         .frame(maxHeight: .infinity)
         .background(Theme.surface)
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: isCollapsed)
+        .onAppear {
+            pomodoro.onFocusComplete = { store.recordPomodoroCycle() }
+        }
     }
 
     // MARK: - Header
@@ -342,15 +345,24 @@ struct NookSidebar: View {
             .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("pomodoro")
-                    .font(Theme.hand(12, weight: .semibold))
-                    .foregroundStyle(Theme.ink)
-                Text("foco · 25 min")
+                HStack(spacing: 4) {
+                    Text("pomodoro")
+                        .font(Theme.hand(12, weight: .semibold))
+                        .foregroundStyle(Theme.ink)
+                    if store.library.pomodoroCycles.todayCount > 0 {
+                        Text("· \(store.library.pomodoroCycles.todayCount) hoje")
+                            .font(Theme.hand(10))
+                            .foregroundStyle(Theme.inkSoft)
+                    }
+                }
+                Text(pomodoro.phaseLabel)
                     .font(Theme.hand(10))
                     .foregroundStyle(Theme.inkSoft)
             }
 
             Spacer(minLength: 4)
+
+            soundToggle
 
             Button {
                 pomodoro.toggle()
@@ -366,6 +378,17 @@ struct NookSidebar: View {
         .background(RoundedRectangle(cornerRadius: Theme.radiusMedium, style: .continuous).fill(Theme.surface))
     }
 
+    private var soundToggle: some View {
+        Button {
+            pomodoro.soundEnabled.toggle()
+        } label: {
+            LucideIcon(name: pomodoro.soundEnabled ? "volume-2" : "volume-x", size: 13)
+                .foregroundStyle(Theme.inkSoft)
+        }
+        .buttonStyle(.plain)
+        .help(pomodoro.soundEnabled ? "som ligado" : "som desligado")
+    }
+
     private var pomodoroButtonCompact: some View {
         Button {
             pomodoro.toggle()
@@ -376,7 +399,7 @@ struct NookSidebar: View {
                 .background(Circle().fill(pomodoro.isRunning ? Theme.accent : Theme.surface.opacity(0.6)))
         }
         .buttonStyle(.plain)
-        .help("pomodoro — \(pomodoro.label)")
+        .help("pomodoro — \(pomodoro.label) · \(pomodoro.phase == .focus ? "foco" : "pausa")")
     }
 
     private var appearanceToggle: some View {

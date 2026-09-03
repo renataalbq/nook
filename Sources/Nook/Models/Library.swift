@@ -37,6 +37,7 @@ enum ItemKind: Codable, Hashable {
     case week(WeekPlanner)
     case postIt(PostIt)
     case mood(MoodTracker)
+    case decor(Decor)
 
     var defaultSize: CGSize {
         switch self {
@@ -48,6 +49,7 @@ enum ItemKind: Codable, Hashable {
         case .week: return CGSize(width: 340, height: 400)
         case .postIt: return CGSize(width: 170, height: 150)
         case .mood: return CGSize(width: 260, height: 110)
+        case .decor(let data): return data.kind.isWashi ? CGSize(width: 130, height: 34) : CGSize(width: 70, height: 70)
         }
     }
 
@@ -113,6 +115,66 @@ enum TintName: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// A decorative shape or washi-tape strip. Pure decoration — nothing to
+/// edit besides its look — but it does rotate, unlike every other widget.
+enum DecorKind: String, Codable, CaseIterable, Identifiable {
+    case star, heart, sparkle, sun, cloud, washi
+    var id: String { rawValue }
+
+    var isWashi: Bool { self == .washi }
+
+    /// Lucide icon name for the sticker shapes; washi tape draws its own
+    /// stripes instead of an icon.
+    var symbol: String {
+        switch self {
+        case .star: return "star"
+        case .heart: return "heart"
+        case .sparkle: return "sparkles"
+        case .sun: return "sun"
+        case .cloud: return "cloud"
+        case .washi: return ""
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .star: return "estrela"
+        case .heart: return "coração"
+        case .sparkle: return "brilho"
+        case .sun: return "sol"
+        case .cloud: return "nuvem"
+        case .washi: return "washi tape"
+        }
+    }
+}
+
+struct Decor: Codable, Hashable {
+    var kind: DecorKind = .star
+    var tint: TintName = .blush
+    var rotation: Double = 0
+}
+
+/// How many pomodoro focus cycles finished today. Tracked separately from
+/// the countdown itself — the running timer is session-only, but "how many
+/// today" should survive quitting the app.
+struct PomodoroDailyCount: Codable, Hashable {
+    var date: String = ""
+    var count: Int = 0
+
+    /// Reads as 0 once the stored day rolls over — the sidebar only ever
+    /// asks "how many today", never "how many total".
+    var todayCount: Int {
+        date == Self.todayKey() ? count : 0
+    }
+
+    static func todayKey() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+}
+
 /// Root persisted document.
 struct Library: Codable {
     var nooks: [Nook]
@@ -121,6 +183,7 @@ struct Library: Codable {
     var appearance: AppearanceMode = .system
     /// Whether the nooks/pages panel is showing as the 64px dot rail.
     var sidebarCollapsed: Bool = false
+    var pomodoroCycles: PomodoroDailyCount = PomodoroDailyCount()
 
     static var starter: Library {
         var welcome = Page()

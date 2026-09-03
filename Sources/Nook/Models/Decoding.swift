@@ -91,6 +91,24 @@ extension MoodTracker {
     }
 }
 
+extension Decor {
+    private enum Keys: String, CodingKey { case kind, tint, rotation }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(kind: c.value(.kind, .star), tint: c.value(.tint, .blush), rotation: c.value(.rotation, 0))
+    }
+}
+
+extension PomodoroDailyCount {
+    private enum Keys: String, CodingKey { case date, count }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: Keys.self)
+        self.init(date: c.value(.date, ""), count: c.value(.count, 0))
+    }
+}
+
 extension Stroke {
     private enum Keys: String, CodingKey { case id, points, colorHex, width }
 
@@ -160,7 +178,9 @@ extension Nook {
 }
 
 extension Library {
-    private enum Keys: String, CodingKey { case nooks, selectedNookID, selectedPageIDs, appearance, sidebarCollapsed }
+    private enum Keys: String, CodingKey {
+        case nooks, selectedNookID, selectedPageIDs, appearance, sidebarCollapsed, pomodoroCycles
+    }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: Keys.self)
@@ -169,7 +189,8 @@ extension Library {
             selectedNookID: c.value(.selectedNookID, nil),
             selectedPageIDs: c.value(.selectedPageIDs, [:]),
             appearance: c.value(.appearance, .system),
-            sidebarCollapsed: c.value(.sidebarCollapsed, false)
+            sidebarCollapsed: c.value(.sidebarCollapsed, false),
+            pomodoroCycles: c.value(.pomodoroCycles, PomodoroDailyCount())
         )
     }
 }

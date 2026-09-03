@@ -6,6 +6,10 @@ import CoreGraphics
 extension UTType {
     /// Declared in Resources/Info.plist under UTExportedTypeDeclarations.
     static let nookTemplate = UTType(exportedAs: "com.nook.template")
+    /// Same idea, for stickers and washi tape dragged in from the dock —
+    /// kept separate from `nookTemplate` since decor carries a `DecorKind`
+    /// rather than a `TemplateKind`.
+    static let nookDecor = UTType(exportedAs: "com.nook.decor")
 }
 
 /// The templates the palette can hand to the canvas.
@@ -60,5 +64,14 @@ struct TemplateDrop: Codable, Transferable {
 
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .nookTemplate)
+    }
+}
+
+/// Payload carried by a drag of a sticker or washi-tape chip to a page.
+struct DecorDrop: Codable, Transferable {
+    var kind: DecorKind
+
+    static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .nookDecor)
     }
 }

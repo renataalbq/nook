@@ -11,20 +11,23 @@ struct CanvasItemView: View {
 
     @State private var dragOffset: CGSize = .zero
     @State private var resizeDelta: CGSize = .zero
+    @State private var rotationDelta: Double = 0
     @State private var isHovering = false
 
     private var liveSize: CGSize {
         CGSize(
-            width: max(120, item.width + resizeDelta.width),
-            height: max(60, item.height + resizeDelta.height)
+            width: max(isDecorItem ? 24 : 120, item.width + resizeDelta.width),
+            height: max(isDecorItem ? 24 : 60, item.height + resizeDelta.height)
         )
     }
 
     var body: some View {
         content
+            .rotationEffect(.degrees(liveRotation), anchor: .center)
             .frame(width: liveSize.width, height: liveSize.height, alignment: .topLeading)
             .overlay(alignment: .bottomTrailing) { resizeHandle }
             .overlay(alignment: .topTrailing) { deleteButton }
+            .overlay(alignment: .top) { if isDecorItem { rotateHandle } }
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .stroke(Theme.inkSoft.opacity(outlineOpacity), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
@@ -39,6 +42,37 @@ struct CanvasItemView: View {
     }
 
     private var isTextItem: Bool { item.kind.isText }
+
+    private var isDecorItem: Bool {
+        if case .decor = item.kind { return true }
+        return false
+    }
+
+    private var liveRotation: Double {
+        guard case .decor(let data) = item.kind else { return 0 }
+        return data.rotation + rotationDelta
+    }
+
+    /// Drag left/right to spin it — a full angle-tracking handle is more
+    /// precision than "rotação leve" (the point of the feature) calls for.
+    private var rotateHandle: some View {
+        LucideIcon(name: "rotate-cw", size: 10)
+            .foregroundStyle(Theme.inkSoft)
+            .frame(width: 18, height: 18)
+            .background(Circle().fill(Theme.surface))
+            .offset(y: -16)
+            .opacity(isHovering ? 1 : 0)
+            .gesture(
+                DragGesture(minimumDistance: 1)
+                    .onChanged { rotationDelta = $0.translation.width * 0.6 }
+                    .onEnded { value in
+                        rotationDelta = 0
+                        guard case .decor(var data) = item.kind else { return }
+                        data.rotation += value.translation.width * 0.6
+                        store.updateKind(item.id, to: .decor(data))
+                    }
+            )
+    }
 
     /// The outline is a selection cue, not decoration: an unselected box the
     /// pointer is not over shows nothing at all. Text boxes skip it entirely —
@@ -82,6 +116,8 @@ struct CanvasItemView: View {
             PostItView(data: data) { store.updateKind(item.id, to: .postIt($0)) }
         case .mood(let data):
             MoodTrackerView(data: data) { store.updateKind(item.id, to: .mood($0)) }
+        case .decor(let data):
+            DecorView(data: data) { store.updateKind(item.id, to: .decor($0)) }
         case .calendar(let data):
             CalendarBoardView(data: data) { store.updateKind(item.id, to: .calendar($0)) }
         case .week(let data):

@@ -11,6 +11,7 @@ struct ToolDock: View {
     /// Keeps click-to-add from stacking every new box on the same spot.
     @State private var dropCount = 0
     @State private var showGifPicker = false
+    @State private var showDecor = false
 
     var body: some View {
         HStack(spacing: 3) {
@@ -18,7 +19,7 @@ struct ToolDock: View {
                 chip(kind)
             }
 
-            stickersChip
+            decorSection
 
             Rectangle().fill(Theme.popoverInk.opacity(0.15)).frame(width: 1, height: 16)
 
@@ -33,6 +34,7 @@ struct ToolDock: View {
         )
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: pen.isActive)
         .animation(.spring(response: 0.3, dampingFraction: 0.85), value: pen.isEraser)
+        .animation(.spring(response: 0.3, dampingFraction: 0.85), value: showDecor)
     }
 
     // MARK: - Templates
@@ -80,30 +82,95 @@ struct ToolDock: View {
         dropCount += 1
     }
 
-    // MARK: - Stickers
+    // MARK: - Stickers & washi tape
+    //
+    // These expand inline rather than into a popover or sheet, same reason
+    // the old template palette did: dragging out of a popover/sheet cancels
+    // the drag, and clicking-to-place needs the chips to still be on-screen.
+    // GIF/image search is the one thing here that doesn't need dragging —
+    // you pick from results inside the sheet — so it stays a sheet.
 
-    private var stickersChip: some View {
-        Button {
-            showGifPicker = true
-        } label: {
-            HStack(spacing: 5) {
-                LucideIcon(name: "sparkles", size: 13)
-                Text("stickers")
-                    .font(Theme.hand(11, weight: .medium))
+    private var decorSection: some View {
+        HStack(spacing: 5) {
+            Button {
+                showDecor.toggle()
+            } label: {
+                HStack(spacing: 5) {
+                    LucideIcon(name: "sparkles", size: 13)
+                    Text("stickers")
+                        .font(Theme.hand(11, weight: .medium))
+                }
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .foregroundStyle(showDecor ? Color.white : Theme.popoverInk.opacity(0.85))
+                .padding(.horizontal, 9)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(showDecor ? Theme.accent : Color.clear))
             }
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-            .foregroundStyle(Theme.popoverInk.opacity(0.85))
-            .padding(.horizontal, 9)
-            .padding(.vertical, 7)
+            .buttonStyle(.plain)
+            .help("figurinhas e washi tape")
+
+            if showDecor {
+                HStack(spacing: 4) {
+                    ForEach(DecorKind.allCases) { kind in
+                        decorChip(kind)
+                    }
+
+                    Rectangle().fill(Theme.popoverInk.opacity(0.15)).frame(width: 1, height: 16)
+
+                    Button {
+                        showGifPicker = true
+                    } label: {
+                        LucideIcon(name: "image-plus", size: 14)
+                            .foregroundStyle(Theme.popoverInk.opacity(0.85))
+                            .frame(width: 26, height: 26)
+                    }
+                    .buttonStyle(.plain)
+                    .help("buscar imagens e GIFs")
+                }
+                .padding(.horizontal, 5)
+                .padding(.vertical, 3)
+                .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Theme.popoverInk.opacity(0.08)))
+            }
         }
-        .buttonStyle(.plain)
-        .help("buscar figurinhas e imagens")
         .sheet(isPresented: $showGifPicker) {
             GifPicker(store: store) { assetID, aspect in
                 place(assetID: assetID, aspect: aspect)
             }
         }
+    }
+
+    private func decorChip(_ kind: DecorKind) -> some View {
+        Group {
+            if kind.isWashi {
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(Theme.accent.opacity(0.5))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 3, style: .continuous)
+                            .stroke(Theme.popoverInk.opacity(0.4), lineWidth: 1)
+                    )
+                    .frame(width: 20, height: 12)
+            } else {
+                LucideIcon(name: kind.symbol, size: 15)
+                    .foregroundStyle(Theme.popoverInk.opacity(0.9))
+            }
+        }
+        .frame(width: 26, height: 26)
+        .contentShape(Rectangle())
+        .onTapGesture { addDecor(kind) }
+        .draggable(DecorDrop(kind: kind)) {
+            LucideIcon(name: kind.isWashi ? "square" : kind.symbol, size: 16)
+                .foregroundStyle(Color.white)
+                .padding(8)
+                .background(Circle().fill(Theme.popover))
+        }
+        .help("\(kind.label) — clique ou arraste para a folha")
+    }
+
+    private func addDecor(_ kind: DecorKind) {
+        let step = CGFloat(dropCount % 8) * 26
+        store.addItem(CanvasItem(kind: .decor(Decor(kind: kind)), at: CGPoint(x: 60 + step, y: 60 + step)))
+        dropCount += 1
     }
 
     private func place(assetID: String, aspect: Double) {
