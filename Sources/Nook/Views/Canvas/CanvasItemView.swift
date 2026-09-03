@@ -27,7 +27,7 @@ struct CanvasItemView: View {
             .frame(width: liveSize.width, height: liveSize.height, alignment: .topLeading)
             .overlay(alignment: .bottomTrailing) { resizeHandle }
             .overlay(alignment: .topTrailing) { deleteButton }
-            .overlay(alignment: .top) { if isDecorItem { rotateHandle } }
+            .overlay(alignment: .top) { if isRotatable { rotateHandle } }
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .stroke(Theme.inkSoft.opacity(outlineOpacity), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
@@ -48,9 +48,25 @@ struct CanvasItemView: View {
         return false
     }
 
+    /// Stickers/washi tape rotate freely; a post-it gets a light tilt, like
+    /// a real one stuck on slightly crooked. Nothing else on the canvas does.
+    private var isRotatable: Bool {
+        switch item.kind {
+        case .decor, .postIt: return true
+        default: return false
+        }
+    }
+
+    private var baseRotation: Double {
+        switch item.kind {
+        case .decor(let data): return data.rotation
+        case .postIt(let data): return data.rotation
+        default: return 0
+        }
+    }
+
     private var liveRotation: Double {
-        guard case .decor(let data) = item.kind else { return 0 }
-        return data.rotation + rotationDelta
+        baseRotation + rotationDelta
     }
 
     /// Drag left/right to spin it — a full angle-tracking handle is more
@@ -67,9 +83,17 @@ struct CanvasItemView: View {
                     .onChanged { rotationDelta = $0.translation.width * 0.6 }
                     .onEnded { value in
                         rotationDelta = 0
-                        guard case .decor(var data) = item.kind else { return }
-                        data.rotation += value.translation.width * 0.6
-                        store.updateKind(item.id, to: .decor(data))
+                        let angle = baseRotation + value.translation.width * 0.6
+                        switch item.kind {
+                        case .decor(var data):
+                            data.rotation = angle
+                            store.updateKind(item.id, to: .decor(data))
+                        case .postIt(var data):
+                            data.rotation = angle
+                            store.updateKind(item.id, to: .postIt(data))
+                        default:
+                            break
+                        }
                     }
             )
     }
