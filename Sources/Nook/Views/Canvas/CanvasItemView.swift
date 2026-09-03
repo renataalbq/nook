@@ -80,6 +80,8 @@ struct CanvasItemView: View {
             TodoListView(data: data) { store.updateKind(item.id, to: .todoList($0)) }
         case .postIt(let data):
             PostItView(data: data) { store.updateKind(item.id, to: .postIt($0)) }
+        case .mood(let data):
+            MoodTrackerView(data: data) { store.updateKind(item.id, to: .mood($0)) }
         case .calendar(let data):
             CalendarBoardView(data: data) { store.updateKind(item.id, to: .calendar($0)) }
         case .week(let data):

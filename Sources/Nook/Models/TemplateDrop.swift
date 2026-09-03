@@ -15,6 +15,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
     case todoList
     case waterTrack
     case postIt
+    case mood
 
     var id: String { rawValue }
 
@@ -25,6 +26,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
         case .todoList: return "listinha"
         case .waterTrack: return "água"
         case .postIt: return "post-it"
+        case .mood: return "mood"
         }
     }
 
@@ -36,6 +38,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
         case .todoList: return "list-checks"
         case .waterTrack: return "droplet"
         case .postIt: return "sticky-note"
+        case .mood: return "face-slightly-smiling"
         }
     }
 
@@ -46,6 +49,7 @@ enum TemplateKind: String, Codable, CaseIterable, Identifiable {
         case .todoList: return .todoList(TodoList())
         case .waterTrack: return .waterTrack(WaterTrack())
         case .postIt: return .postIt(PostIt())
+        case .mood: return .mood(MoodTracker())
         }
     }
 }
